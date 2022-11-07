@@ -1,9 +1,7 @@
-# const define
 import constant
 import re
 from sys import argv
 
-# this is to run '$python3 main.py example1.txt'
 isV = False
 if argv[1] == '-v':
     isV = True
@@ -16,9 +14,6 @@ else:
     output = ""
     print(code)
     print("======================")
-
-# code = """operand2 := operand1 + 2 ;
-# target := operand1 + operand2 * 3"""
 
 # lexical analyzer part
 nextToken = 0
