@@ -1,4 +1,6 @@
 from sys import argv
+import token_class
+import lexical_analyzer as la
 
 # argv[0] is always main.py
 
@@ -12,12 +14,12 @@ txt = open(argv[1], 'r')
 # prints the instance of text not the content.
 
 # read()
-# read file's contents
-# split()
-# https://docs.python.org/3/library/stdtypes.html?highlight=rstrip#str.rstrip
+# read file's contents line by line
 
-# return a list of words in the string, using sep as the delimeter string.
-code = txt.read().split()
+code_line = txt.readlines()
+
+# Define the symbol table.
+symbolTable = {}
 
 # Define count_IDENT, count_CONST, count_OP
 count_IDENT = 0
@@ -29,5 +31,30 @@ message_OK = '<OK>'
 message_ERROR = '<ERROR>'
 message_WARNING = '<WARNING>'
 
-# Define the symbol table.
+for line in code_line:
+    # split()
+    # https://docs.python.org/3/library/stdtypes.html?highlight=rstrip#str.rstrip
+    # return a list of words in the string, using sep as the delimeter string.
+
+    # split line into tokens
+    tokens = line.split()
+    print(line, end='')
+    
+    # define each token types
+    for token in tokens:
+        print(la.lexical(token))
+
+    print("=================================")
+
+
+
+
+# Define lookup
+def lookup(token):
+    for key in symbolTable:
+        if token == key:
+            return token
+    return token_class.UNKNOWN
+
+
 

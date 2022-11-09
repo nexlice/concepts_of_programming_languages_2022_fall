@@ -22,12 +22,22 @@ def isIdentifier(token, index):
             else:
                 return isIdentifier(token, index)
 
-    if (whatChar(token, index) == token_class.LETTER or whatChar(token, index) == token_class.DIGIT):
+    elif (whatChar(token, index) == token_class.LETTER or whatChar(token, index) == token_class.DIGIT):
         index = index + 1
         if index == len(token):
             return True
         else:
             return isIdentifier(token, index)
+
+def isConstInt(token, index):
+    if (whatChar(token, index) == token_class.DIGIT):
+        index = index + 1
+        if index == len(token):
+            return True
+        else:
+            return isConstInt(token, index)
+    else:
+        return False
 
                 
 
@@ -77,9 +87,20 @@ def lexical(token):
         token_string = token
         return (next_token, token_string)
 
-    # check if token is IDENTIFIER
     elif(token == ')'):
         next_token = token_class.PAREN_RIGHT
+        token_string = token
+        return (next_token, token_string)
+
+    # check if token is IDENTIFIER
+    elif(isIdentifier(token, 0)):
+        next_token = token_class.IDENT
+        token_string = token
+        return (next_token, token_string)
+
+    # check if token is CONST_INT
+    elif(isConstInt(token, 0)):
+        next_token = token_class.CONST_INT
         token_string = token
         return (next_token, token_string)
 
@@ -88,6 +109,10 @@ def lexical(token):
         token_string = token
         return (next_token, token_string)
 
-print(isIdentifier('ad1', 0))
-print(isIdentifier('a', 0))
-print(isIdentifier('1', 0))
+# print(lexical(':='))
+# print(lexical('+'))
+# print(lexical('operand1'))
+# print(lexical('op:'))
+# print(lexical('123'))
+# print(lexical('a123'))
+# print(lexical('123d'))

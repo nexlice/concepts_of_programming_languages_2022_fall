@@ -5,6 +5,7 @@ DIGIT = 1
 # token types
 IDENT = 10
 CONST_INT = 20
+
 OP_ASSIGN = 30
 OP_ADD = 31
 OP_MULT = 32
