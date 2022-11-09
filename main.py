@@ -31,6 +31,9 @@ message_OK = '<OK>'
 message_ERROR = '<ERROR>'
 message_WARNING = '<WARNING>'
 
+# define code_token
+code_token = []
+
 for line in code_line:
     # split()
     # https://docs.python.org/3/library/stdtypes.html?highlight=rstrip#str.rstrip
@@ -39,15 +42,12 @@ for line in code_line:
     # split line into tokens
     tokens = line.split()
     print(line, end='')
-    
+
     # define each token types
     for token in tokens:
-        print(la.lexical(token))
+        code_token.append(la.lexical(token))
 
-    print("=================================")
-
-
-
+print(code_token)
 
 # Define lookup
 def lookup(token):
@@ -55,6 +55,8 @@ def lookup(token):
         if token == key:
             return token
     return token_class.UNKNOWN
+
+
 
 
 
