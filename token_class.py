@@ -1,0 +1,16 @@
+# single characters
+LETTER = 0
+DIGIT = 1
+
+# token types
+IDENT = 10
+CONST_INT = 20
+OP_ASSIGN = 30
+OP_ADD = 31
+OP_MULT = 32
+
+SEMICOLON = 40
+PAREN_LEFT = 41
+PAREN_RIGHT = 42
+
+UNKNOWN = 50
