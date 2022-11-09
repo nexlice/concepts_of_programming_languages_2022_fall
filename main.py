@@ -16,8 +16,6 @@ txt = open(argv[1], 'r')
 # read()
 # read file's contents line by line
 
-code_line = txt.readlines()
-
 # Define the symbol table.
 symbolTable = {}
 
@@ -34,153 +32,207 @@ message_WARNING = '<WARNING>'
 # define code_token
 code_token = []
 
-for line in code_line:
-    # split()
-    # https://docs.python.org/3/library/stdtypes.html?highlight=rstrip#str.rstrip
-    # return a list of words in the string, using sep as the delimeter string.
+# split()
+# https://docs.python.org/3/library/stdtypes.html?highlight=rstrip#str.rstrip
+# return a list of words in the string, using sep as the delimeter string.
 
-    # split line into tokens
-    tokens = line.split()
-    print(line, end='')
+# read txt line by line
+code_lines = txt.readlines()
 
-    # define each token types
-    for token in tokens:
-        code_token.append(la.lexical(token))
+# split line into tokens
+tokens = txt.read().split()
 
-#print(code_token)
+# define each token types
+for token in tokens:
+    code_token.append(la.lexical(token))
+
+# append EOF
+code_token.append((token_class.EOF, "EOF"))
 
 # Define lookup
 def lookup(token):
     for key in symbolTable:
         if token == key:
-            return token
+            return symbolTable[key]
     return token_class.UNKNOWN
 
+# Define current location
+cursor = 0
 
+# Define error message
+errorMessage = ''
 
-def program(code_token):
-    statements(code_token)
+# all of the derivations uses cursor and code_token as global value.
 
-def statements(code_token):
-    statement(code_token)
-    statements_new(code_token)
+def program():
+    statements()
 
-def statements_new(code_token):
-    if code_token == None:
-        return True
+def statements():
+    statement()
+    statements_new()
 
-    for token in code_token:
-        if semi_colon(token):
-            if (code_token.index(token) == len(code_token) - 1):
-                code_token_tmp = None
-                break
-            else:
-                code_token_tmp = code_token[code_token.index(token) + 1 :]
-                break
-    statements(code_token_tmp)
-
-def statement(code_token):
-    if code_token == None:
-        return True
-    if ident(code_token[0][0]):
-        if assignment_op(code_token[1][0]):
-            symbolTable[code_token[0][1]] = expression(code_token[2:])
+def statements_new():
+    global count_CONST, count_IDENT, count_OP, errorMessage, message_OK, message_ERROR, message_WARNING, cursor, code_token
+    if semi_colon():
+        for i in range(cursor - 1):
+            print(code_token[cursor][1] + " ")
+        # print the results
+        print(f'ID:{count_IDENT}; CONST:{count_CONST}; OP:{count_OP};')
+        if errorMessage == '':
+            print(message_OK)
+        else:
+            print(errorMessage)
+        # start new line
+        count_CONST, count_IDENT, count_OP = 0
+        errorMessage = ''
+        statements()
     else:
-        return False
+        # epsilon
+        pass
 
-def expression(code_token):
-    term(code_token)
-    term_tail(code_token)
+def statement():
+    global cursor
+    global code_token
+    if ident():
+        # LHS 
+        # check if identifier is already on symbol table
+        if code_token[cursor - 1] in symbolTable:
+            pass
+        # if not, append to symbol table.
+        else:
+            symbolTable[code_token[cursor - 1][1]] = 0
+    assignment_operator()
+    expression()
 
-def term_tail(code_token):
-    # epsilon
-    if code_token == None:
-        return True
+def expression():
+    term()
+    term_tail()
 
-    code_token_tmp = code_token
-
-    for token in code_token:
-        # (TODO) two adds?
-        if add_operator(token):
-            code_token_tmp = code_token[code_token.index(token) + 1 :]
-            break
-    term(code_token_tmp)
-    term_tail(code_token_tmp)
-
-def term(code_token):
-    factor(code_token)
-    factor_tail(code_token)
-
-def factor_tail(code_token):
-    # epsilon
-    if code_token == None:
-        return True
-
-    code_token_tmp = code_token
-    
-    for token in code_token:
-        # (TODO) two mults?
-        if mult_operator(token):
-            code_token_tmp = code_token[code_token.index(token) + 1 :]
-            break
-    factor(code_token_tmp)
-    factor_tail(code_token_tmp)
-
-def factor(code_token):
-    if (ident(code_token[0])):
-        ident(code_token[0])
-    elif (const(code_token[0])):
-        const(code_token[0])
-    elif (left_paren(code_token[0])):
-        expression(code_token[1:])
-    #right_paren()
-
-def const(token):
-    if (token == token_class.CONST_INT):
-        return True
+def term_tail():
+    if add_operator():
+        term()
+        term_tail()
     else:
-        return False
+        # epsilon
+        pass
 
-def ident(token):
-    if (token == token_class.IDENT):
-        return True
+def term():
+    factor()
+    factor_tail()
+
+def factor_tail():
+    if mult_operator():
+        factor()
+        factor_tail()
     else:
-        return False
+        # epsilon
+        pass
 
-def assignment_op(token):
-    if (token == token_class.OP_ASSIGN):
-        return True
+def factor():
+    global errorMessage
+    global message_WARNING
+    if left_paren():
+        expression()
+        right_paren()
+
+    elif ident():
+        # RHS >> find the identifier.
+        if code_token[cursor - 1] in symbolTable:
+            pass
+        # if not, assert error message.
+        else:
+            symbolTable[code_token[cursor - 1][1]] = 0
+            errorMessage = message_WARNING + f'\"정의되지 않은 변수{code_token[cursor - 1][1]}가 참조됨\"'
     else:
-        return False
+        const()
 
-def semi_colon(token):
-    if (token == token_class.SEMICOLON):
-        return True
-    else:
-        return False
-
-def add_operator(token):
-    if (token == token_class.OP_ADD):
+def const():
+    global code_token
+    global cursor
+    global count_CONST
+    if code_token[cursor][0] == token_class.CONST_INT:
+        # print("const" + str(cursor))
+        cursor += 1
+        count_CONST += 1
         return True
     else:
         return False
 
-def mult_operator(token):
-    if (token == token_class.OP_MULT):
+def ident():
+    global code_token
+    global cursor
+    global count_IDENT
+    if code_token[cursor][0] == token_class.IDENT:
+        # print("ident" + str(cursor))
+        cursor += 1
+        count_IDENT += 1
         return True
     else:
         return False
 
-def left_paren(token):
-    if (token == token_class.PAREN_LEFT):
+def assignment_operator():
+    global code_token
+    global cursor
+    if code_token[cursor][0] == token_class.OP_ASSIGN:
+        # print("assignment" + str(cursor))
+        cursor += 1
         return True
     else:
         return False
 
-def right_paren(token):
-    if (token == token_class.PAREN_RIGHT):
+def semi_colon():
+    global code_token
+    global cursor
+    if code_token[cursor][0] == token_class.SEMICOLON:
+        # print("semi_colon" + str(cursor))
+        cursor += 1
         return True
     else:
         return False
 
-program(code_token)
+def add_operator():
+    global code_token
+    global cursor
+    global count_OP
+    if code_token[cursor][0] == token_class.OP_ADD:
+        # print("add" + str(cursor))
+        cursor += 1
+        count_OP += 1
+        return True
+    else:
+        return False
+
+def mult_operator():
+    global code_token
+    global cursor
+    global count_OP
+    if code_token[cursor][0] == token_class.OP_MULT:
+        # print("mult" + str(cursor))
+        cursor += 1
+        count_OP += 1
+        return True
+    else:
+        return False
+
+def left_paren():
+    global code_token
+    global cursor
+    if code_token[cursor][0] == token_class.PAREN_LEFT:
+        # print("left_paren" + str(cursor))
+        cursor += 1
+        return True
+    else:
+        return False
+
+def right_paren():
+    global code_token
+    global cursor
+    if code_token[cursor][0] == token_class.PAREN_RIGHT:
+        # print("right_paren" + str(cursor))
+        cursor += 1
+        return True
+    else:
+        return False
+
+program()
+#print("cursor value is "+ str(cursor))
