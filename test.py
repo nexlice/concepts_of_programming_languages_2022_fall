@@ -15,4 +15,4 @@
 #     print(st)
 
 
-print("\"")
+print(eval("2*3+1"))

@@ -37,7 +37,7 @@ code_token = []
 # return a list of words in the string, using sep as the delimeter string.
 
 # read txt line by line
-code_lines = txt.readlines()
+# code_lines = txt.readlines()
 
 # split line into tokens
 tokens = txt.read().split()
@@ -58,10 +58,16 @@ def lookup(token):
 
 # Define current location
 cursor = 0
+priorsemicolon = 0
 
 # Define error message
 errorMessage = ''
 
+# Define LHS identifier
+ident_LHS = ''
+
+# Define RHS eval string
+eval_RHS = ''
 # all of the derivations uses cursor and code_token as global value.
 
 def program():
@@ -72,19 +78,37 @@ def statements():
     statements_new()
 
 def statements_new():
-    global count_CONST, count_IDENT, count_OP, errorMessage, message_OK, message_ERROR, message_WARNING, cursor, code_token
+    global count_CONST, count_IDENT, count_OP, errorMessage, message_OK, message_ERROR, message_WARNING, cursor, code_token, ident_LHS, eval_RHS, symbolTable
     if semi_colon():
+
+        # print the raw code.
         for i in range(cursor - 1):
-            print(code_token[cursor][1] + " ")
+            if i < priorsemicolon:
+                continue
+            print(code_token[i][1] + " ", end = '')
+        print("")
+
         # print the results
         print(f'ID:{count_IDENT}; CONST:{count_CONST}; OP:{count_OP};')
         if errorMessage == '':
             print(message_OK)
         else:
             print(errorMessage)
-        # start new line
-        count_CONST, count_IDENT, count_OP = 0
+        
+        print("")
+        print("===============================")
+        print("")
+
+        # when exiting the line, do the assignment operation to the symbol table.
+        symbolTable[ident_LHS] = eval(eval_RHS)
+
+        # new line starts.
+        count_CONST = 0
+        count_IDENT = 0
+        count_OP = 0
         errorMessage = ''
+        eval_RHS = ''
+        ident_LHS = ''
         statements()
     else:
         # epsilon
@@ -93,23 +117,32 @@ def statements_new():
 def statement():
     global cursor
     global code_token
+    global priorsemicolon
+    global ident_LHS
+    priorsemicolon = cursor
     if ident():
         # LHS 
-        # check if identifier is already on symbol table
-        if code_token[cursor - 1] in symbolTable:
-            pass
-        # if not, append to symbol table.
-        else:
-            symbolTable[code_token[cursor - 1][1]] = 0
-    assignment_operator()
-    expression()
+        ident_LHS = code_token[cursor - 1][1]
+
+        assignment_operator()
+        expression()
 
 def expression():
     term()
     term_tail()
 
 def term_tail():
+    global eval_RHS
+    global errorMessage
     if add_operator():
+        # concatenate the add operator to the eval string.
+        eval_RHS = eval_RHS + code_token[cursor - 1][1]
+
+        # error handling
+        # if + appears sequentially,
+        # ignore the value and mover cursor.
+        if add_operator():
+            errorMessage = message_WARNING + f'\"중복 연산자({code_token[cursor - 1][1]}) 제거\"'
         term()
         term_tail()
     else:
@@ -121,7 +154,10 @@ def term():
     factor_tail()
 
 def factor_tail():
+    global eval_RHS
     if mult_operator():
+        # concatenate the mult operator to the eval string.
+        eval_RHS = eval_RHS + code_token[cursor - 1][1]
         factor()
         factor_tail()
     else:
@@ -131,20 +167,26 @@ def factor_tail():
 def factor():
     global errorMessage
     global message_WARNING
+    global eval_RHS
     if left_paren():
         expression()
         right_paren()
 
     elif ident():
         # RHS >> find the identifier.
-        if code_token[cursor - 1] in symbolTable:
-            pass
+        if code_token[cursor - 1][1] in symbolTable:
+            # if the identifier exists in the symbolTable,
+            # lookup and find the value.
+            # append the value to the eval string.
+            eval_RHS = eval_RHS + str(lookup(code_token[cursor - 1][1]))
         # if not, assert error message.
         else:
-            symbolTable[code_token[cursor - 1][1]] = 0
-            errorMessage = message_WARNING + f'\"정의되지 않은 변수{code_token[cursor - 1][1]}가 참조됨\"'
-    else:
-        const()
+            errorMessage = message_ERROR + f'\"정의되지 않은 변수({code_token[cursor - 1][1]})가 참조됨\"'
+    elif const():
+        # RHS
+        # append the value to the eval string
+        eval_RHS = eval_RHS + code_token[cursor - 1][1]
+        
 
 def const():
     global code_token
@@ -234,5 +276,18 @@ def right_paren():
     else:
         return False
 
+def print_result():
+    global symbolTable
+    result_str = ''
+
+    for key in symbolTable:
+        tmp_str = key + ":" + str(symbolTable[key]) + "; "
+        result_str = result_str + tmp_str
+
+    print(f'Result ==> {result_str}')
+
+# main program.
+print("")
 program()
-#print("cursor value is "+ str(cursor))
+print("")
+print_result()
