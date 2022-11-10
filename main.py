@@ -9,7 +9,7 @@ import lexical_analyzer as la
 # https://docs.python.org/ko/3/library/functions.html?highlight=open#open
 # 'r' open in read mode.
 txt = open(argv[1], 'r')
-
+txt_tmp = open(argv[1], 'r')
 # print(txt)
 # prints the instance of text not the content.
 
@@ -36,6 +36,20 @@ code_token = []
 # https://docs.python.org/3/library/stdtypes.html?highlight=rstrip#str.rstrip
 # return a list of words in the string, using sep as the delimeter string.
 tokens = txt.read().split()
+
+for i in range(len(tokens)):
+    if tokens[i][0] == '(':
+        to_insert = tokens[i]
+        tokens.insert(i, '(')
+        tokens.insert(i + 1, to_insert[1:])
+        tokens.remove(to_insert)
+    if tokens[i][-1] == ')':
+        if len(tokens[i]) == 1:
+            continue
+        to_insert = tokens[i]
+        tokens.insert(i, to_insert[:-1])
+        tokens.insert(i + 1, ')')
+        tokens.remove(to_insert)
 
 # define each token types
 code_token = []
@@ -301,6 +315,10 @@ def print_result():
     print(f'Result ==> {result_str}')
 
 # main program.
+print("")
+print("Given code >>")
+print(txt_tmp.read())
+print("===============================")
 print("")
 program()
 print("")
