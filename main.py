@@ -35,14 +35,11 @@ code_token = []
 # split()
 # https://docs.python.org/3/library/stdtypes.html?highlight=rstrip#str.rstrip
 # return a list of words in the string, using sep as the delimeter string.
-
-# read txt line by line
-# code_lines = txt.readlines()
-
-# split line into tokens
 tokens = txt.read().split()
 
 # define each token types
+code_token = []
+
 for token in tokens:
     code_token.append(la.lexical(token))
 
@@ -100,7 +97,11 @@ def statements_new():
         print("")
 
         # when exiting the line, do the assignment operation to the symbol table.
-        symbolTable[ident_LHS] = eval(eval_RHS)
+        # if eval_RHS is Unknown, skip the evaluation of the string.
+        if 'Unknown' in eval_RHS:
+            symbolTable[ident_LHS] = 'Unknown'
+        else:
+            symbolTable[ident_LHS] = eval(eval_RHS)
 
         # new line starts.
         count_CONST = 0
@@ -136,7 +137,8 @@ def term_tail():
     global errorMessage
     if add_operator():
         # concatenate the add operator to the eval string.
-        eval_RHS = eval_RHS + code_token[cursor - 1][1]
+        if eval_RHS != 'Unknown':
+            eval_RHS = eval_RHS + code_token[cursor - 1][1]
 
         # error handling
         # if + appears sequentially,
@@ -157,7 +159,8 @@ def factor_tail():
     global eval_RHS
     if mult_operator():
         # concatenate the mult operator to the eval string.
-        eval_RHS = eval_RHS + code_token[cursor - 1][1]
+        if eval_RHS != 'Unknown':
+            eval_RHS = eval_RHS + code_token[cursor - 1][1]
         factor()
         factor_tail()
     else:
@@ -168,6 +171,7 @@ def factor():
     global errorMessage
     global message_WARNING
     global eval_RHS
+    global symbolTable
     if left_paren():
         expression()
         right_paren()
@@ -175,17 +179,27 @@ def factor():
     elif ident():
         # RHS >> find the identifier.
         if code_token[cursor - 1][1] in symbolTable:
-            # if the identifier exists in the symbolTable,
+            # check if the identifier exists in the symbolTable.
             # lookup and find the value.
-            # append the value to the eval string.
+            # if the value is Unknown, change the eval string to Unknown.
+            if lookup(code_token[cursor - 1][1]) == 'Unknown':
+                eval_RHS = 'Unknown'
+
+            # else append the value to the eval string.
             eval_RHS = eval_RHS + str(lookup(code_token[cursor - 1][1]))
         # if not, assert error message.
         else:
+            # append the identifier to the symbol table with the value 'Unknown'
+            symbolTable[code_token[cursor - 1][1]] = 'Unknown'
+            # change the value into Unknown.
+            eval_RHS = 'Unknown'
+            # assert error message
             errorMessage = message_ERROR + f'\"정의되지 않은 변수({code_token[cursor - 1][1]})가 참조됨\"'
     elif const():
         # RHS
         # append the value to the eval string
-        eval_RHS = eval_RHS + code_token[cursor - 1][1]
+        if eval_RHS != 'Unknown':
+            eval_RHS = eval_RHS + code_token[cursor - 1][1]
         
 
 def const():
