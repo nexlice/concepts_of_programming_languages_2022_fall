@@ -1,0 +1,19 @@
+# single characters
+LETTER = 0
+DIGIT = 1
+
+# token types
+IDENT = 10
+VARIABLE = 11
+CALL = 12
+PRINT_ARI = 13
+
+COMMA = 30
+
+SEMICOLON = 40
+PAREN_LEFT = 41
+PAREN_RIGHT = 42
+
+UNKNOWN = 50
+
+EOF = 100
